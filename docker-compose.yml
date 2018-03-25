@@ -15,6 +15,7 @@ services:
           - node.role == manager
     depends_on:
       - db 
+      - mongodb
     volumes:
       - redis-data:/redis-data
 
