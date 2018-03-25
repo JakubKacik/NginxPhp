@@ -230,6 +230,8 @@ RUN chmod +x /start.sh
 VOLUME /redis-data
 WORKDIR /redis-data
 
+RUN echo 'vm.overcommit_memory = 1' >> /etc/sysctl.conf
+
 # Set container port
 EXPOSE 80 
 
