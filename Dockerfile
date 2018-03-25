@@ -190,30 +190,33 @@ RUN addgroup -S redis \
 	apk del .build-deps; \
 	redis-server --version
 
-RUN mkdir /data && chown redis:redis /data
-VOLUME /data
-WORKDIR /data
+# Install composer
+RUN EXPECTED_COMPOSER_SIGNATURE=$(wget -q -O - https://composer.github.io/installer.sig) && \
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+    php -r "if (hash_file('SHA384', 'composer-setup.php') === '${EXPECTED_COMPOSER_SIGNATURE}') { echo 'Composer.phar Installer verified'; } else { echo 'Composer.phar Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+    php composer-setup.php --install-dir=/usr/bin --filename=composer && \
+    php -r "unlink('composer-setup.php');"
 
 # Make necessary directories
 RUN mkdir -p /etc/nginx/sites-available/ && \
-mkdir -p /etc/nginx/sites-enabled/ && \
-rm -Rf /var/www/* && \
-mkdir /run/nginx/
+	mkdir -p /etc/nginx/sites-enabled/ && \
+	rm -Rf /var/www/* && \
+	mkdir /redis-data && chown redis:redis /redis-data
 
 # Configure Nginx
 RUN rm -Rf /etc/nginx/nginx.conf
-COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/nginx-site.conf /etc/nginx/sites-available/default.conf
+COPY config/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY config/nginx/nginx-site.conf /etc/nginx/sites-available/default.conf
 RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
 # Configure PHP
-COPY config/php.conf /usr/local/etc/php-fpm.d/www.conf
+COPY config/php/php.conf /usr/local/etc/php-fpm.d/www.conf
 
 # Configure Supervisord
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Configure Redis
-COPY config/redis.conf /usr/local/etc/redis/redis.conf
+COPY config/redis/redis.conf /usr/local/etc/redis/redis.conf
 
 # Add application
 RUN mkdir -p /var/www/html
@@ -222,6 +225,10 @@ COPY html/ /var/www/html/
 # Add start script
 COPY script/start.sh /start.sh
 RUN chmod +x /start.sh
+
+# Set volume for redis data
+VOLUME /redis-data
+WORKDIR /redis-data
 
 # Set container port
 EXPOSE 80 
