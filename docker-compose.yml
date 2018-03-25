@@ -9,12 +9,13 @@ services:
       - web-net
     deploy:
       mode: global
-      #replicas: 3
+      replicas: 3
       placement:
         constraints:
           - node.role == manager
     depends_on:
       - db 
+      
   db:
     image: mysql
     environment:
@@ -23,6 +24,7 @@ services:
       - "3306:3306"
     networks: 
       - web-net
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     depends_on:
