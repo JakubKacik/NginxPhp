@@ -227,8 +227,8 @@ COPY script/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Set volume for redis data
-VOLUME /redis-data
-WORKDIR /redis-data
+#VOLUME /redis-data
+#WORKDIR /redis-data
 
 # Set container port
 EXPOSE 80 
